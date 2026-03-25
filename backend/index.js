@@ -4,7 +4,6 @@ import dotenv from "dotenv";
 
 import authRoutes from "./routes/authRoutes.js";
 import studentRoutes from "./routes/studentRoutes.js";
-import recruiterRoutes from "./routes/recruiterRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import initDB from "./config/initDB.js";
 
@@ -19,7 +18,6 @@ await initDB();
 
 app.use("/api/auth", authRoutes);
 app.use("/api/student", studentRoutes);
-app.use("/api/recruiter", recruiterRoutes);
 app.use("/api/admin", adminRoutes);
 
 app.listen(process.env.PORT, () =>

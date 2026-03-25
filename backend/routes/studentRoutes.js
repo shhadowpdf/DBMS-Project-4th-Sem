@@ -9,4 +9,10 @@ router.get("/jobs", auth, role("student"), controller.getJobs);
 router.post("/apply", auth, role("student"), controller.applyJob);
 router.get("/my", auth, role("student"), controller.myApplications);
 
+router.put("/update", auth, role("student"), controller.updateUser);
+
+router.get("/get-profile", auth, role("student"), controller.getProfile);
+
+router.get('/get-interviews', auth, role("student"), controller.getMyInterviews);
+
 export default router;

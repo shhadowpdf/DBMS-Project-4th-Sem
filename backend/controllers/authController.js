@@ -1,4 +1,4 @@
-import db from "../config/initDB.js";
+import db from "../config/db.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
@@ -7,12 +7,35 @@ export const register = async (req, res) => {
 
     const hashed = await bcrypt.hash(password, 10);
 
-    const [result] = await db.query(
-        "INSERT INTO users (email, password, role) VALUES (?, ?, ?)",
-        [email, hashed, role]
-    );
 
-    res.json({ message: "User registered", userId: result.insertId });
+
+    try {
+        await db.beginTransaction();
+
+        const [result] = await db.query(
+            "INSERT INTO users (email, password, role) VALUES (?, ?, ?)",
+            [email, hashed, role]
+        );
+
+        const userId = result.insertId;
+
+        // 🔒 Safe role handling
+        if (role === "student") {
+            await db.query(
+                "INSERT INTO students (user_id) VALUES (?)",
+                [userId]
+            );
+        }
+
+        await db.commit();
+
+        res.json({ message: "User registered", userId });
+
+    } catch (error) {
+        await db.rollback();
+        console.error("Register Error:", error);
+        res.status(500).json({ message: "Error registering user" });
+    }
 };
 
 export const login = async (req, res) => {

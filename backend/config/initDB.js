@@ -33,7 +33,7 @@ const initDB = async () => {
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 email VARCHAR(100) UNIQUE NOT NULL,
                 password VARCHAR(255) NOT NULL,
-                role ENUM('admin','student','recruiter') NOT NULL,
+                role ENUM('admin','student') NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         `);
@@ -42,6 +42,7 @@ const initDB = async () => {
         await db.query(`
             CREATE TABLE IF NOT EXISTS students (
                 user_id INT PRIMARY KEY,
+                roll_no VARCHAR(10) UNIQUE,
                 name VARCHAR(100),
                 cgpa FLOAT,
                 branch VARCHAR(50),
@@ -56,23 +57,13 @@ const initDB = async () => {
         await db.query(`
             CREATE TABLE IF NOT EXISTS companies (
                 id INT AUTO_INCREMENT PRIMARY KEY,
+                created_by INT,
                 name VARCHAR(150),
                 description TEXT,
-                approved BOOLEAN DEFAULT FALSE,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         `);
 
-        // 🔷 RECRUITERS
-        await db.query(`
-            CREATE TABLE IF NOT EXISTS recruiters (
-                user_id INT PRIMARY KEY,
-                company_id INT,
-                name VARCHAR(100),
-                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-                FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
-            )
-        `);
 
         // 🔷 JOBS
         await db.query(`
@@ -83,21 +74,12 @@ const initDB = async () => {
                 ctc FLOAT,
                 min_cgpa FLOAT,
                 description TEXT,
-                approved BOOLEAN DEFAULT FALSE,
+                eligible_branches TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
             )
         `);
 
-        // 🔷 JOB ELIGIBLE BRANCHES
-        await db.query(`
-            CREATE TABLE IF NOT EXISTS job_eligible_branches (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                job_id INT,
-                branch VARCHAR(50),
-                FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE CASCADE
-            )
-        `);
 
         // 🔷 APPLICATIONS
         await db.query(`
@@ -105,7 +87,7 @@ const initDB = async () => {
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 student_id INT,
                 job_id INT,
-                status ENUM('APPLIED','SHORTLISTED','INTERVIEW','SELECTED','REJECTED','ACCEPTED') DEFAULT 'APPLIED',
+                status ENUM('APPLIED','SHORTLISTED','INTERVIEW','SELECTED','REJECTED') DEFAULT 'APPLIED',
                 applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 UNIQUE(student_id, job_id),
                 FOREIGN KEY (student_id) REFERENCES students(user_id) ON DELETE CASCADE,
@@ -120,10 +102,10 @@ const initDB = async () => {
                 application_id INT,
                 interview_date DATETIME,
                 location VARCHAR(255),
-                round_name VARCHAR(100),
                 FOREIGN KEY (application_id) REFERENCES applications(id) ON DELETE CASCADE
             )
         `);
+
 
         // 🔷 INDEXES (SAFE CREATION)
 
