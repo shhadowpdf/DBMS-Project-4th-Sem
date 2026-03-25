@@ -5,7 +5,11 @@ import * as controller from "../controllers/adminController.js";
 
 const router = express.Router();
 
-router.put("/approve-company", auth, role("admin"), controller.approveCompany);
-router.put("/approve-job", auth, role("admin"), controller.approveJob);
+router.post("/job", auth, role("admin"), controller.createJob);
+router.get("/applicants/:jobId", auth, role("admin"), controller.getApplicants);
+router.put("/status", auth, role("admin"), controller.updateStatus);
+router.post("/company", auth, role("admin"), controller.createCompany);
+
+router.post("/schedule-interview", auth, role("admin"), controller.scheduleInterview);
 
 export default router;
