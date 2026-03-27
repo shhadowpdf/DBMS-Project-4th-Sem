@@ -5,7 +5,7 @@ import * as controller from "../controllers/studentController.js";
 
 const router = express.Router();
 
-router.get("/jobs", auth, role("student"), controller.getJobs);
+router.get("/jobs", auth, controller.getJobs);
 router.post("/apply", auth, role("student"), controller.applyJob);
 router.get("/my", auth, role("student"), controller.myApplications);
 

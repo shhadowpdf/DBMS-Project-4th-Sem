@@ -11,5 +11,8 @@ router.put("/status", auth, role("admin"), controller.updateStatus);
 router.post("/company", auth, role("admin"), controller.createCompany);
 
 router.post("/schedule-interview", auth, role("admin"), controller.scheduleInterview);
+router.get("/interviews", auth, role("admin"), controller.getInterviews);
+
+router.get("/get-company", auth, role("admin"), controller.fetchCompanies);
 
 export default router;

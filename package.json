@@ -18,6 +18,8 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
-    "concurrently": "^9.2.1"
+    "@tailwindcss/vite": "^4.2.2",
+    "concurrently": "^9.2.1",
+    "tailwindcss": "^4.2.2"
   }
 }

@@ -25,8 +25,18 @@ export const createCompany = async (req, res) => {
     }
 };
 
+export const fetchCompanies = async (req, res) => {
+    try {
+        const [companies] = await db.query("SELECT * FROM companies");
+        res.status(200).json(companies);
+    } catch (error) {
+        console.error("Fetch companies error:", error);
+        res.status(404).json({ message: "Error fetching companies" });
+    }
+};
+
 export const createJob = async (req, res) => {
-    const { company_id, role, ctc, min_cgpa, description, branches } = req.body;
+    const { company_id, role, ctc, min_cgpa, description, eligible_branches } = req.body;
 
     if (!company_id || !role || !ctc || !min_cgpa) {
         return res.status(400).json({ message: "Missing required fields" });
@@ -42,20 +52,26 @@ export const createJob = async (req, res) => {
         if (company.length === 0) {
             return res.status(400).json({ message: "Company does not exist" });
         }
+
+        // Convert eligible_branches array to comma-separated string
+        const branchesString = Array.isArray(eligible_branches) 
+            ? eligible_branches.join(",") 
+            : eligible_branches || "";
+
         await db.beginTransaction();
 
         // 🔥 Insert job
         const [result] = await db.query(
             `INSERT INTO jobs (company_id, role, ctc, min_cgpa, description, eligible_branches)
              VALUES (?, ?, ?, ?, ?, ?)`,
-            [company_id, role, ctc, min_cgpa, description, branches.join(",")]
+            [company_id, role, ctc, min_cgpa, description, branchesString]
         );
 
         const jobId = result.insertId;
 
         await db.commit();
 
-        res.json({
+        return res.json({
             message: "Job created successfully",
             jobId
         });
@@ -63,7 +79,7 @@ export const createJob = async (req, res) => {
     } catch (err) {
         await db.rollback();
         console.error(err);
-        res.status(500).json({ message: "Error creating job" });
+        return res.status(500).json({ message: "Error creating job" });
     }
 };
 
@@ -71,10 +87,24 @@ export const getApplicants = async (req, res) => {
     const { jobId } = req.params;
 
     const [apps] = await db.query(
-        `SELECT a.id, s.name, s.cgpa, a.status 
-         FROM applications a 
-         JOIN students s ON a.student_id = s.user_id 
-         WHERE a.job_id=?`,
+        `SELECT 
+    a.id,
+    s.name,
+    s.cgpa,
+    s.branch,
+    s.roll_no,
+    s.skills,
+    s.resume_url,
+    a.status,
+    a.applied_at,
+    c.name AS company_name,
+    j.role,
+    j.ctc
+FROM applications a
+JOIN students s ON a.student_id = s.user_id
+JOIN jobs j ON a.job_id = j.id
+JOIN companies c ON j.company_id = c.id
+WHERE a.job_id = ?`,
         [jobId]
     );
 
@@ -91,7 +121,6 @@ export const updateStatus = async (req, res) => {
     try {
         await db.beginTransaction();
 
-        
         const [apps] = await db.query(
             "SELECT * FROM applications WHERE id=?",
             [applicationId]
@@ -103,13 +132,13 @@ export const updateStatus = async (req, res) => {
 
         const application = apps[0];
 
-        
         await db.query(
             "UPDATE applications SET status=? WHERE id=?",
             [status, applicationId]
         );
 
-        if (status === "SELECTED") {
+        // Mark student as placed when shortlisted
+        if (status === "shortlisted") {
             await db.query(
                 "UPDATE students SET placed = TRUE WHERE user_id=?",
                 [application.student_id]
@@ -118,19 +147,19 @@ export const updateStatus = async (req, res) => {
 
         await db.commit();
 
-        res.json({ message: "Status updated successfully" });
+        return res.json({ message: "Status updated successfully" });
 
     } catch (err) {
         await db.rollback();
         console.error(err);
-        res.status(500).json({ message: "Error updating status" });
+        return res.status(500).json({ message: "Error updating status" });
     }
 };
 
 export const scheduleInterview = async (req, res) => {
-    const { application_id, interview_date, location } = req.body;
+    const { application_id, interview_round, interview_date, interview_time, interview_link } = req.body;
 
-    if (!application_id || !interview_date ) {
+    if (!application_id || !interview_round || !interview_date || !interview_time) {
         return res.status(400).json({ message: "Missing required fields" });
     }
 
@@ -144,23 +173,37 @@ export const scheduleInterview = async (req, res) => {
             return res.status(404).json({ message: "Application not found" });
         }
 
-        if (apps[0].status !== "INTERVIEW") {
-            return res.status(400).json({
-                message: "Application is not in INTERVIEW stage"
-            });
-        }
+        // Combine interview_date and interview_time into DATETIME format
+        const interviewDateTime = `${interview_date} ${interview_time}`;
 
-    
         await db.query(
-            `INSERT INTO interviews (application_id, interview_date, location)
-             VALUES (?, STR_TO_DATE(?, '%d/%m/%Y %r'), ?)`,
-            [application_id, interview_date, location]
+            `INSERT INTO interviews (application_id, interview_round, interview_date, interview_time, interview_link)
+             VALUES (?, ?, ?, ?, ?)`,
+            [application_id, interview_round, interviewDateTime, interview_time, interview_link || null]
         );
 
-        return res.json({ message: "Interview scheduled" });
+        return res.json({ message: "Interview scheduled successfully" });
 
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: "Error scheduling interview" });
+    }
+};
+
+export const getInterviews = async (req, res) => {
+    try {
+        const [interviews] = await db.query(
+            `SELECT i.*, a.id as application_id, s.roll_no, s.name as student_name, s.branch
+             FROM interviews i
+             JOIN applications a ON i.application_id = a.id
+             JOIN students s ON a.student_id = s.user_id
+             ORDER BY i.interview_date ASC`
+        );
+
+        return res.json(interviews);
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Error fetching interviews" });
     }
 };

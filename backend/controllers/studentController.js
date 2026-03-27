@@ -1,7 +1,7 @@
 import db from "../config/db.js";
 
 export const getJobs = async (req, res) => {
-    const [jobs] = await db.query("SELECT * FROM jobs");
+    const [jobs] = await db.query("SELECT j.*, c.name as company_name FROM jobs j, companies c WHERE j.company_id = c.id;");
     res.json(jobs);
 };
 
@@ -22,14 +22,16 @@ export const applyJob = async (req, res) => {
         [studentId]
     );
 
+    // Check if student is already placed
+    if (student.placed) {
+        return res.status(400).json({ message: "You are already placed" });
+    }
+
     const [[job]] = await db.query(
         "SELECT * FROM jobs WHERE id=?",
         [jobId]
     );
-    console.log(student);
-    
-    console.log(job);
-    
+
     if (student.cgpa < job.min_cgpa)
         return res.status(400).json({ message: "Not eligible (CGPA)" });
 
@@ -48,13 +50,12 @@ export const myApplications = async (req, res) => {
     const studentId = req.user.id;
 
     const [apps] = await db.query(
-        `SELECT a.*, j.role, j.ctc 
-         FROM applications a 
-         JOIN jobs j ON a.job_id = j.id 
-         WHERE a.student_id=?`,
+        `SELECT a.*, j.role, j.ctc, j.description, c.name as company_name, j.min_cgpa
+         FROM applications a, companies c, jobs j
+         WHERE a.student_id=? AND a.job_id=j.id AND j.company_id=c.id`,
         [studentId]
     );
-
+         
     res.json(apps);
 };
 
@@ -92,14 +93,21 @@ export const getProfile = async(req, res) => {
 export const getMyInterviews = async (req, res) => {
     const userId = req.user.id;
 
-    const [rows] = await db.query(
-        `SELECT i.id, i.interview_date, i.location, i.round_name, j.role
-         FROM interviews i
-         JOIN applications a ON i.application_id = a.id
-         JOIN jobs j ON a.job_id = j.id
-         WHERE a.student_id = ?`,
-        [userId]
-    );
+    try {
+        const [rows] = await db.query(
+            `SELECT i.id, i.interview_date, i.interview_time, i.interview_round, i.interview_link, j.role, j.ctc, c.name as company_name, a.status as application_status
+             FROM interviews i
+             JOIN applications a ON i.application_id = a.id
+             JOIN jobs j ON a.job_id = j.id
+             JOIN companies c ON j.company_id = c.id
+             WHERE a.student_id = ?
+             ORDER BY i.interview_date ASC`,
+            [userId]
+        );
 
-    res.json(rows);
+        res.json(rows);
+    } catch (error) {
+        console.error("Get interviews error:", error);
+        res.status(500).json({ message: "Error fetching interviews" });
+    }
 };
