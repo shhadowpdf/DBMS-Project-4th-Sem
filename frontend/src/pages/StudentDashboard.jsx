@@ -22,6 +22,7 @@ const StudentDashboard = () => {
     fetchStudentProfile,
     fetchMyApplications,
     applyToJob,
+    unapplyJob,
     fetchMyInterviews,
     updateStudentProfile,
   } = usePlacement();
@@ -59,9 +60,12 @@ const StudentDashboard = () => {
   };
 
   const statusColor = (s) => {
-    switch (s) {
+    const status = (s || "").toString().toLowerCase();
+    switch (status) {
+      case "applied":
       case "pending":
         return "secondary";
+      case "selected":
       case "shortlisted":
         return "default";
       case "accepted":
@@ -71,6 +75,11 @@ const StudentDashboard = () => {
       default:
         return "secondary";
     }
+  };
+
+  const canUnapply = (status) => {
+    const normalized = (status || "").toString().toLowerCase();
+    return normalized === "applied" || normalized === "pending";
   };
 
   return (
@@ -242,9 +251,31 @@ const StudentDashboard = () => {
                       </p>
                     )}
                   </div>
-                  <Badge variant={statusColor(a.status)} className="capitalize">
-                    {a.status}
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge variant={statusColor(a.status)} className="capitalize">
+                      {a.status}
+                    </Badge>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={!canUnapply(a.status)}
+                      onClick={async () => {
+                        const result = await unapplyJob(a.job_id);
+                        if (result.success) {
+                          setAppliedJobIds((prev) => {
+                            const next = new Set(prev);
+                            next.delete(a.job_id);
+                            return next;
+                          });
+                          toast.success(result.message);
+                        } else {
+                          toast.error(result.message);
+                        }
+                      }}
+                    >
+                      Unapply
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             ))}

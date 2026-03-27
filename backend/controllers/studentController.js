@@ -111,3 +111,26 @@ export const getMyInterviews = async (req, res) => {
         res.status(500).json({ message: "Error fetching interviews" });
     }
 };
+
+export const unapplyJob = async (req, res) => {
+    const userId = req.user.id;
+    const { jobId } = req.params;
+
+    try {
+        const [application] = await db.query(
+            "SELECT * FROM applications WHERE student_id = ? AND job_id = ?",
+            [userId, jobId]
+        );
+
+        if (application.length === 0) {
+            return res.status(404).json({ message: "Application not found" });
+        }
+
+        await db.query("DELETE FROM applications WHERE student_id = ? AND job_id = ?", [userId, jobId]);
+
+        return res.json({ message: "Unapplied from job successfully" });
+    } catch (error) {
+        console.error("Unapply error:", error);
+        res.status(500).json({ message: "Error unapplying from job" });
+    }
+};

@@ -6,9 +6,11 @@ import * as controller from "../controllers/adminController.js";
 const router = express.Router();
 
 router.post("/job", auth, role("admin"), controller.createJob);
+router.delete("/job/:jobId", auth, role("admin"), controller.deleteJob);
 router.get("/applicants/:jobId", auth, role("admin"), controller.getApplicants);
 router.put("/status", auth, role("admin"), controller.updateStatus);
 router.post("/company", auth, role("admin"), controller.createCompany);
+router.delete("/company/:companyId", auth, role("admin"), controller.deleteCompany);
 
 router.post("/schedule-interview", auth, role("admin"), controller.scheduleInterview);
 router.get("/interviews", auth, role("admin"), controller.getInterviews);

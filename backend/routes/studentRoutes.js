@@ -7,6 +7,7 @@ const router = express.Router();
 
 router.get("/jobs", auth, controller.getJobs);
 router.post("/apply", auth, role("student"), controller.applyJob);
+router.delete("/unapply/:jobId", auth, role("student"), controller.unapplyJob);
 router.get("/my", auth, role("student"), controller.myApplications);
 
 router.put("/update", auth, role("student"), controller.updateUser);
