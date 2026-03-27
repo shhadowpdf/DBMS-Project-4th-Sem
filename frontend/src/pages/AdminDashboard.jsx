@@ -36,6 +36,8 @@ const AdminDashboard = () => {
     createCompany,
     fetchCompanies,
     createJob,
+    deleteJob,
+    deleteCompany,
     updateApplicationStatus,
     scheduleInterview,
     fetchAdminInterviews,
@@ -84,6 +86,7 @@ const AdminDashboard = () => {
     const result = await createCompany(companyForm);
     if (result.success) {
       toast.success(result.message);
+      setCompanies((await fetchCompanies()) || []);
       setCompanyForm({ name: "", description: "" });
     } else {
       toast.error(result.message);
@@ -129,8 +132,29 @@ const AdminDashboard = () => {
     setJobApplicants(applicants);
   };
 
+  const normalizeStatus = (status) => (status || "").toString().toLowerCase();
+
+  const statusLabel = (status) => {
+    switch (normalizeStatus(status)) {
+      case "applied":
+      case "pending":
+        return "Pending";
+      case "selected":
+        return "Selected for Interview";
+      case "shortlisted":
+        return "Shortlisted";
+      case "accepted":
+        return "Accepted";
+      case "rejected":
+        return "Rejected";
+      default:
+        return "Unknown";
+    }
+  };
+
   const handleUpdateStatus = async (applicationId, status) => {
-    const result = await updateApplicationStatus(applicationId, status);
+    const normalized = normalizeStatus(status);
+    const result = await updateApplicationStatus(applicationId, normalized);
     if (result.success) {
       toast.success(result.message);
       if (selectedJobId) {
@@ -186,13 +210,15 @@ const AdminDashboard = () => {
   };
 
   const statusColor = (s) => {
-    switch (s) {
+    switch (normalizeStatus(s)) {
+      case "applied":
       case "pending":
         return "secondary";
+      case "selected":
       case "shortlisted":
         return "default";
       case "accepted":
-        return "default";
+        return "success";
       case "rejected":
         return "destructive";
       default:
@@ -243,7 +269,23 @@ const AdminDashboard = () => {
                       <p className="font-medium text-foreground text-lg">{c.name}</p>
                       <p className="text-sm text-muted-foreground">{c.description || "No description"}</p>
                     </div>
-                    <Building2 className="w-5 h-5 text-muted-foreground" />
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={async () => {
+                          const result = await deleteCompany(c.id);
+                          if (result.success) {
+                            toast.success(result.message);
+                          } else {
+                            toast.error(result.message);
+                          }
+                        }}
+                      >
+                        Delete
+                      </Button>
+                      <Building2 className="w-5 h-5 text-muted-foreground" />
+                    </div>
                   </CardContent>
                 </Card>
               ))}
@@ -285,7 +327,53 @@ const AdminDashboard = () => {
           </TabsContent>
 
           <TabsContent value="jobs" className="space-y-4">
-            <Card className="shadow-card">
+            
+            <div className="grid gap-3">
+              {loading && <p className="text-muted-foreground text-center py-8">Loading jobs...</p>}
+              {!loading && jobs.length === 0 && (
+                <p className="text-muted-foreground text-sm text-center py-8">No jobs yet.</p>
+              )}
+              {jobs.map((j) => (
+                <Card key={j.id} className="shadow-card">
+                  <CardContent className="py-4">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <p className="font-medium text-foreground">{j.role} • <span className="text-muted-foreground text-sm">{j.company_name}</span></p>
+                        <p className="text-sm text-muted-foreground">
+                          CTC: ₹{j.ctc} LPA • Min CGPA: {j.min_cgpa}
+                        </p>
+                        {j.description && (
+                          <p className="text-sm text-muted-foreground mt-1">{j.description}</p>
+                        )}
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleViewApplicants(j.id, j.role)}
+                        >
+                          View Applicants
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={async () => {
+                            const result = await deleteJob(j.id);
+                            if (result.success) {
+                              toast.success(result.message);
+                            } else {
+                              toast.error(result.message);
+                            }
+                          }}
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+              <Card className="shadow-card">
               <CardHeader>
                 <CardTitle className="text-lg font-heading flex items-center gap-2">
                   <Plus className="w-5 h-5" /> Create Job
@@ -372,35 +460,6 @@ const AdminDashboard = () => {
                 </form>
               </CardContent>
             </Card>
-            <div className="grid gap-3">
-              {loading && <p className="text-muted-foreground text-center py-8">Loading jobs...</p>}
-              {!loading && jobs.length === 0 && (
-                <p className="text-muted-foreground text-sm text-center py-8">No jobs yet.</p>
-              )}
-              {jobs.map((j) => (
-                <Card key={j.id} className="shadow-card">
-                  <CardContent className="py-4">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <p className="font-medium text-foreground">{j.role}</p>
-                        <p className="text-sm text-muted-foreground">
-                          CTC: ₹{j.ctc} LPA • Min CGPA: {j.min_cgpa}
-                        </p>
-                        {j.description && (
-                          <p className="text-sm text-muted-foreground mt-1">{j.description}</p>
-                        )}
-                      </div>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleViewApplicants(j.id, j.role)}
-                      >
-                        View Applicants
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
             </div>
           </TabsContent>
 
@@ -482,16 +541,19 @@ const AdminDashboard = () => {
                           Branch: {a.branch}
                         </p>
                         <p className="text-sm text-muted-foreground">
+                          Resume: {a.resume_url}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
                           Applied: {new Date(a.applied_at).toLocaleDateString()}
                         </p>
                       </div>
                       <div className="flex flex-col items-end gap-2">
                         <div className="flex items-center gap-2">
-                          <Badge variant={statusColor(a.status)} className="capitalize">
-                            {a.status}
+                          <Badge variant={statusColor(a.status)}>
+                            {statusLabel(a.status)}
                           </Badge>
                           <Select
-                            value={a.status}
+                            value={normalizeStatus(a.status)}
                             onValueChange={(v) => handleUpdateStatus(a.id, v)}
                           >
                             <SelectTrigger className="w-32 h-8 text-xs">
@@ -499,13 +561,13 @@ const AdminDashboard = () => {
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="applied">Pending</SelectItem>
+                              <SelectItem value="selected">Selected for Interview</SelectItem>
                               <SelectItem value="shortlisted">Shortlisted</SelectItem>
-                              <SelectItem value="selected">Selected</SelectItem>
                               <SelectItem value="rejected">Rejected</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
-                        {a.status === "SELECTED" && (
+                        {normalizeStatus(a.status) === "selected" && (
                           <Button
                             size="sm"
                             variant="default"

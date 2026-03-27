@@ -81,6 +81,20 @@ export const PlacementProvider = ({ children }) => {
     }
   };
 
+  const unapplyJob = async (jobId) => {
+    try {
+      await api.delete(`/student/unapply/${jobId}`);
+      await fetchMyApplications();
+      await fetchJobs();
+      return { success: true, message: "Job unapplied successfully" };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || "Failed to unapply",
+      };
+    }
+  };
+
   const fetchMyInterviews = async () => {
     try {
       const response = await api.get("/student/get-interviews");
@@ -118,13 +132,40 @@ export const PlacementProvider = ({ children }) => {
 
   const createJob = async (jobData) => {
     try {
-      const response = await api.post("/admin/job", jobData);
+      await api.post("/admin/job", jobData);
       await fetchJobs();
       return { success: true, message: "Job created successfully" };
     } catch (error) {
       return {
         success: false,
         message: error.response?.data?.message || "Failed to create job",
+      };
+    }
+  };
+
+  const deleteJob = async (jobId) => {
+    try {
+      await api.delete(`/admin/job/${jobId}`);
+      await fetchJobs();
+      return { success: true, message: "Job deleted successfully" };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || "Failed to delete job",
+      };
+    }
+  };
+
+  const deleteCompany = async (companyId) => {
+    try {
+      await api.delete(`/admin/company/${companyId}`);
+      await fetchCompanies();
+      await fetchJobs();
+      return { success: true, message: "Company deleted successfully" };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || "Failed to delete company",
       };
     }
   };
@@ -206,10 +247,14 @@ export const PlacementProvider = ({ children }) => {
         createCompany,
         fetchCompanies,
         createJob,
+        deleteJob,
+        deleteCompany,
         fetchApplicants,
         updateApplicationStatus,
         fetchAdminInterviews,
         scheduleInterview,
+        // Student actions
+        unapplyJob,
       }}
     >
       {children}

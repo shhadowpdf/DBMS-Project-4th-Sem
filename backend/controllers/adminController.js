@@ -118,6 +118,23 @@ export const updateStatus = async (req, res) => {
         return res.status(400).json({ message: "Missing fields" });
     }
 
+    const statusMap = {
+        applied: "APPLIED",
+        pending: "APPLIED",
+        selected: "SELECTED",
+        shortlisted: "SHORTLISTED",
+        interview: "INTERVIEW",
+        accepted: "ACCEPTED",
+        rejected: "REJECTED",
+    };
+
+    const normalized = (status || "").toString().toLowerCase();
+    const dbStatus = statusMap[normalized] || status;
+
+    if (!Object.values(statusMap).includes(dbStatus)) {
+        return res.status(400).json({ message: "Invalid status value" });
+    }
+
     try {
         await db.beginTransaction();
 
@@ -127,6 +144,7 @@ export const updateStatus = async (req, res) => {
         );
 
         if (apps.length === 0) {
+            await db.rollback();
             return res.status(404).json({ message: "Application not found" });
         }
 
@@ -134,11 +152,11 @@ export const updateStatus = async (req, res) => {
 
         await db.query(
             "UPDATE applications SET status=? WHERE id=?",
-            [status, applicationId]
+            [dbStatus, applicationId]
         );
 
         // Mark student as placed when shortlisted
-        if (status === "shortlisted") {
+        if (dbStatus === "SHORTLISTED") {
             await db.query(
                 "UPDATE students SET placed = TRUE WHERE user_id=?",
                 [application.student_id]
@@ -205,5 +223,41 @@ export const getInterviews = async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: "Error fetching interviews" });
+    }
+};
+
+export const deleteJob = async (req, res) => {
+    const { jobId } = req.params;
+
+    try {
+        const [job] = await db.query("SELECT * FROM jobs WHERE id = ?", [jobId]);
+
+        if (job.length === 0) {
+            return res.status(404).json({ message: "Job not found" });
+        }
+
+        await db.query("DELETE FROM jobs WHERE id=?", [jobId]);
+        return res.json({ message: "Job deleted successfully" });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Error deleting job" });
+    }
+};
+
+export const deleteCompany = async (req, res) => {
+    const { companyId } = req.params;
+
+    try {
+        const [company] = await db.query("SELECT * FROM companies WHERE id = ?", [companyId]);
+
+        if (company.length === 0) {
+            return res.status(404).json({ message: "Company not found" });
+        }
+
+        await db.query("DELETE FROM companies WHERE id = ?", [companyId]);
+        return res.json({ message: "Company deleted successfully" });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Error deleting company" });
     }
 };

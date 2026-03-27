@@ -131,7 +131,7 @@ const AuthPage = () => {
               }
 
               <div className="space-y-2">
-                <Label>Email</Label>
+                <Label>Email *</Label>
                 <Input
                   type="email"
                   value={email}
@@ -142,7 +142,7 @@ const AuthPage = () => {
               </div>
 
               <div className="space-y-2">
-                <Label>Password</Label>
+                <Label>Password *</Label>
                 <Input
                   type="password"
                   value={password}
@@ -154,7 +154,7 @@ const AuthPage = () => {
 
               {!isLogin && (
                 <div className="space-y-2">
-                  <Label>Confirm Password</Label>
+                  <Label>Confirm Password *</Label>
                   <Input
                     type="password"
                     value={confirmPassword}
@@ -196,12 +196,13 @@ const AuthPage = () => {
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1">
-                      <Label className="text-xs">CGPA</Label>
+                      <Label className="text-xs">CGPA *</Label>
                       <Input
                         value={profile.cgpa}
                         onChange={(e) =>
                           setProfile((p) => ({ ...p, cgpa: e.target.value }))
                         }
+                        required
                         placeholder="8.5"
                       />
                     </div>
