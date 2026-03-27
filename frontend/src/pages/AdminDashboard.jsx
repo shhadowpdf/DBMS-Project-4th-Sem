@@ -498,14 +498,14 @@ const AdminDashboard = () => {
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="pending">Pending</SelectItem>
+                              <SelectItem value="applied">Pending</SelectItem>
                               <SelectItem value="shortlisted">Shortlisted</SelectItem>
-                              <SelectItem value="accepted">Accepted</SelectItem>
+                              <SelectItem value="selected">Selected</SelectItem>
                               <SelectItem value="rejected">Rejected</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
-                        {a.status === "accepted" && (
+                        {a.status === "SELECTED" && (
                           <Button
                             size="sm"
                             variant="default"

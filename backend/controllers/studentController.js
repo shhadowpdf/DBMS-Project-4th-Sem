@@ -95,7 +95,7 @@ export const getMyInterviews = async (req, res) => {
 
     try {
         const [rows] = await db.query(
-            `SELECT i.id, i.interview_date, i.interview_time, i.interview_round, i.interview_link, j.role, j.ctc, c.name as company_name
+            `SELECT i.id, i.interview_date, i.interview_time, i.interview_round, i.interview_link, j.role, j.ctc, c.name as company_name, a.status as application_status
              FROM interviews i
              JOIN applications a ON i.application_id = a.id
              JOIN jobs j ON a.job_id = j.id

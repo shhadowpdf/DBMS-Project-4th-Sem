@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Briefcase, ClipboardList, Calendar, LogOut, User, Send, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
+import UpdateProfileDialog from "@/components/UpdateProfileDialog";
 
 const StudentDashboard = () => {
   const { user, logout } = useAuth();
@@ -22,9 +23,11 @@ const StudentDashboard = () => {
     fetchMyApplications,
     applyToJob,
     fetchMyInterviews,
+    updateStudentProfile,
   } = usePlacement();
   const navigate = useNavigate();
   const [appliedJobIds, setAppliedJobIds] = useState(new Set());
+  const [profileDialogOpen, setProfileDialogOpen] = useState(false);
 
   useEffect(() => {
     // Load data on mount
@@ -78,10 +81,16 @@ const StudentDashboard = () => {
             PlaceMe
           </h1>
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setProfileDialogOpen(true)}
+              title="Update Profile"
+              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+            >
               <User className="w-4 h-4" />
               {studentProfile?.name || user?.email}
-            </div>
+            </Button>
             <Button variant="ghost" size="sm" onClick={handleLogout}>
               <LogOut className="w-4 h-4" />
             </Button>
@@ -265,14 +274,14 @@ const StudentDashboard = () => {
                       </p>
                     </div>
 
-                    {/* Interview Round & Status */}
+                    {/* Interview Round & Application Status */}
                     <div className="flex items-start justify-between">
                       <div>
                         <p className="text-sm font-medium text-muted-foreground mb-1">Interview Round</p>
                         <p className="text-lg font-bold text-foreground">{i.interview_round}</p>
                       </div>
-                      <Badge variant="default" className="capitalize">
-                        Scheduled
+                      <Badge variant={statusColor(i.application_status)} className="capitalize">
+                        {i.application_status}
                       </Badge>
                     </div>
 
@@ -312,6 +321,13 @@ const StudentDashboard = () => {
           </TabsContent>
         </Tabs>
       </main>
+
+      <UpdateProfileDialog
+        open={profileDialogOpen}
+        onOpenChange={setProfileDialogOpen}
+        studentProfile={studentProfile}
+        onUpdate={updateStudentProfile}
+      />
     </div>
   );
 };
