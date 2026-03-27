@@ -100,8 +100,10 @@ const initDB = async () => {
             CREATE TABLE IF NOT EXISTS interviews (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 application_id INT,
+                interview_round VARCHAR(255),
                 interview_date DATETIME,
-                location VARCHAR(255),
+                interview_time TIME,
+                interview_link VARCHAR(500),
                 FOREIGN KEY (application_id) REFERENCES applications(id) ON DELETE CASCADE
             )
         `);

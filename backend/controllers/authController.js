@@ -3,11 +3,9 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
 export const register = async (req, res) => {
-    const { email, password, role } = req.body;
+    const { email, password, role, roll_no, name, cgpa, branch, skills, resume_url } = req.body;
 
     const hashed = await bcrypt.hash(password, 10);
-
-
 
     try {
         await db.beginTransaction();
@@ -22,8 +20,8 @@ export const register = async (req, res) => {
         // 🔒 Safe role handling
         if (role === "student") {
             await db.query(
-                "INSERT INTO students (user_id) VALUES (?)",
-                [userId]
+                "INSERT INTO students (user_id, roll_no, name, cgpa, branch, skills, resume_url) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                [userId, roll_no || null, name || null, cgpa || null, branch || null, skills || null, resume_url || null]
             );
         }
 
@@ -57,5 +55,5 @@ export const login = async (req, res) => {
         process.env.JWT_SECRET
     );
 
-    res.json({ token });
+    res.json({ token, role: user.role });
 };
