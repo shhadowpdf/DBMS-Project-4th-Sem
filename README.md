@@ -35,7 +35,6 @@ A comprehensive full-stack web application for managing student placements in ed
 - **MySQL** database
 - **JWT** for authentication
 - **bcrypt** for password hashing
-- **multer** for file uploads
 - **cors** for cross-origin requests
 
 ### Frontend
