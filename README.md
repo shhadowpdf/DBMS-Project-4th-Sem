@@ -188,7 +188,8 @@ placement-management-system/
 │   │   │   └── tokenHandler.js
 │   │   ├── components/
 │   │   │   ├── ui/         # Shadcn UI components
-│   │   │   └── ...
+│   │   │   ├── NavLink.jsx
+│   │   │   └── UpdateProfileDialog.jsx
 │   │   ├── context/
 │   │   │   ├── AuthContext.jsx
 │   │   │   └── PlacementContext.jsx
