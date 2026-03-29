@@ -21,14 +21,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Building2, Briefcase, Calendar, LogOut, Plus, X } from "lucide-react";
+import { Building2, Briefcase, Calendar, LogOut, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 const AdminDashboard = () => {
   const { user, logout } = useAuth();
   const {
     jobs,
-    applications,
     interviews,
     loading,
     fetchJobs,
@@ -58,6 +57,7 @@ const AdminDashboard = () => {
   const [jobApplicants, setJobApplicants] = useState([]);
   const [isApplicantsOpen, setIsApplicantsOpen] = useState(false);
   const [selectedJobRole, setSelectedJobRole] = useState("");
+  const [selectedJobApplicantsCount, setSelectedJobApplicantsCount] = useState(0);
   const [selectedApplicant, setSelectedApplicant] = useState(null);
   const [isInterviewFormOpen, setIsInterviewFormOpen] = useState(false);
   const [interviewForm, setInterviewForm] = useState({
@@ -127,9 +127,12 @@ const AdminDashboard = () => {
   const handleViewApplicants = async (jobId, jobRole) => {
     setSelectedJobId(jobId);
     setSelectedJobRole(jobRole);
+    setSelectedJobApplicantsCount(0);
+    setJobApplicants([]);
     setIsApplicantsOpen(true);
     const applicants = await fetchApplicants(jobId);
     setJobApplicants(applicants);
+    setSelectedJobApplicantsCount(applicants.length);
   };
 
   const normalizeStatus = (status) => (status || "").toString().toLowerCase();
@@ -160,6 +163,7 @@ const AdminDashboard = () => {
       if (selectedJobId) {
         const updated = await fetchApplicants(selectedJobId);
         setJobApplicants(updated);
+        setSelectedJobApplicantsCount(updated.length);
       }
     } else {
       toast.error(result.message);
@@ -198,6 +202,7 @@ const AdminDashboard = () => {
       if (selectedJobId) {
         const updated = await fetchApplicants(selectedJobId);
         setJobApplicants(updated);
+        setSelectedJobApplicantsCount(updated.length);
       }
     } else {
       toast.error(result.message);
@@ -241,6 +246,28 @@ const AdminDashboard = () => {
       </header>
 
       <main className="max-w-6xl mx-auto p-4 md:p-6">
+        <div className="grid gap-4 md:grid-cols-2 mb-6">
+          <Card className="shadow-card">
+            <CardContent className="py-5 flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Total Companies</p>
+                <p className="text-3xl font-bold text-foreground">{companies.length}</p>
+              </div>
+              <Building2 className="w-8 h-8 text-muted-foreground" />
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-card">
+            <CardContent className="py-5 flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Total Jobs</p>
+                <p className="text-3xl font-bold text-foreground">{jobs.length}</p>
+              </div>
+              <Briefcase className="w-8 h-8 text-muted-foreground" />
+            </CardContent>
+          </Card>
+        </div>
+
         <Tabs defaultValue="companies" className="space-y-6">
           <TabsList className="grid w-full grid-cols-4 max-w-2xl">
             <TabsTrigger value="companies" className="gap-1">
@@ -277,6 +304,7 @@ const AdminDashboard = () => {
                           const result = await deleteCompany(c.id);
                           if (result.success) {
                             toast.success(result.message);
+                            setCompanies((await fetchCompanies()) || []);
                           } else {
                             toast.error(result.message);
                           }
@@ -514,6 +542,9 @@ const AdminDashboard = () => {
             </DialogHeader>
 
             <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Total students applied: {selectedJobApplicantsCount}
+              </p>
               {loading && <p className="text-center py-8">Loading applicants...</p>}
               {!loading && jobApplicants.length === 0 && (
                 <p className="text-muted-foreground text-sm text-center py-8">
@@ -562,7 +593,7 @@ const AdminDashboard = () => {
                             <SelectContent>
                               <SelectItem value="applied">Pending</SelectItem>
                               <SelectItem value="selected">Selected for Interview</SelectItem>
-                              <SelectItem value="shortlisted">Shortlisted</SelectItem>
+                              <SelectItem value="shortlisted">Accepted</SelectItem>
                               <SelectItem value="rejected">Rejected</SelectItem>
                             </SelectContent>
                           </Select>

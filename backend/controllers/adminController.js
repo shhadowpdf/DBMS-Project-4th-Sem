@@ -155,13 +155,19 @@ export const updateStatus = async (req, res) => {
             [dbStatus, applicationId]
         );
 
-        // Mark student as placed when shortlisted
-        if (dbStatus === "SHORTLISTED") {
-            await db.query(
-                "UPDATE students SET placed = TRUE WHERE user_id=?",
-                [application.student_id]
-            );
-        }
+        const [placedApplications] = await db.query(
+            `SELECT id
+             FROM applications
+             WHERE student_id = ?
+               AND status IN ('SHORTLISTED', 'ACCEPTED')
+             LIMIT 1`,
+            [application.student_id]
+        );
+
+        await db.query(
+            "UPDATE students SET placed = ? WHERE user_id = ?",
+            [placedApplications.length > 0, application.student_id]
+        );
 
         await db.commit();
 
