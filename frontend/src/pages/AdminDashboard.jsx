@@ -21,14 +21,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Building2, Briefcase, Calendar, LogOut, Plus, X } from "lucide-react";
+import { BarChart3, Building2, Briefcase, Calendar, LogOut, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 const AdminDashboard = () => {
   const { user, logout } = useAuth();
   const {
     jobs,
-    applications,
     interviews,
     loading,
     fetchJobs,
@@ -58,6 +57,7 @@ const AdminDashboard = () => {
   const [jobApplicants, setJobApplicants] = useState([]);
   const [isApplicantsOpen, setIsApplicantsOpen] = useState(false);
   const [selectedJobRole, setSelectedJobRole] = useState("");
+  const [selectedJobApplicantsCount, setSelectedJobApplicantsCount] = useState(0);
   const [selectedApplicant, setSelectedApplicant] = useState(null);
   const [isInterviewFormOpen, setIsInterviewFormOpen] = useState(false);
   const [interviewForm, setInterviewForm] = useState({
@@ -67,15 +67,94 @@ const AdminDashboard = () => {
     interview_time: "",
     interview_link: "",
   });
+  const [statsLoading, setStatsLoading] = useState(false);
+  const [adminStats, setAdminStats] = useState({
+    totalApplied: 0,
+    totalAccepted: 0,
+    averageCtc: 0,
+    medianCtc: 0,
+    placementRate: 0,
+  });
 
   useEffect(() => {
     const loadData = async () => {
-      await fetchJobs();
+      const fetchedJobs = (await fetchJobs()) || [];
       setCompanies((await fetchCompanies()) || []);
       await fetchAdminInterviews();
+      await loadAdminStats(fetchedJobs);
     };
     loadData();
   }, []);
+
+  const loadAdminStats = async (jobsList = jobs) => {
+    if (!jobsList.length) {
+      setAdminStats({
+        totalApplied: 0,
+        totalAccepted: 0,
+        averageCtc: 0,
+        medianCtc: 0,
+        placementRate: 0,
+      });
+      return;
+    }
+
+    setStatsLoading(true);
+    try {
+      const applicantsByJob = await Promise.all(
+        jobsList.map(async (job) => ({
+          job,
+          applicants: (await fetchApplicants(job.id)) || [],
+        }))
+      );
+
+      const totalApplied = applicantsByJob.reduce(
+        (count, { applicants }) => count + applicants.length,
+        0
+      );
+
+      const acceptedStatuses = new Set(["accepted", "shortlisted"]);
+      const acceptedCtcs = applicantsByJob.flatMap(({ job, applicants }) =>
+        applicants
+          .filter((applicant) => acceptedStatuses.has(normalizeStatus(applicant.status)))
+          .map(() => Number(job.ctc))
+          .filter((ctc) => Number.isFinite(ctc))
+      );
+
+      const sortedCtcs = [...acceptedCtcs].sort((a, b) => a - b);
+      const totalAccepted = sortedCtcs.length;
+      const averageCtc =
+        totalAccepted > 0
+          ? sortedCtcs.reduce((sum, ctc) => sum + ctc, 0) / totalAccepted
+          : 0;
+      const medianCtc =
+        totalAccepted === 0
+          ? 0
+          : totalAccepted % 2 === 1
+            ? sortedCtcs[Math.floor(totalAccepted / 2)]
+            : (sortedCtcs[totalAccepted / 2 - 1] + sortedCtcs[totalAccepted / 2]) / 2;
+      const placementRate = totalApplied > 0 ? (totalAccepted / totalApplied) * 100 : 0;
+
+      setAdminStats({
+        totalApplied,
+        totalAccepted,
+        averageCtc,
+        medianCtc,
+        placementRate,
+      });
+    } finally {
+      setStatsLoading(false);
+    }
+  };
+
+  const formatCtc = (value) => {
+    if (!Number.isFinite(value) || value === 0) return "0 LPA";
+    return `₹${value.toFixed(1)} LPA`;
+  };
+
+  const formatPercentage = (value) => {
+    if (!Number.isFinite(value) || value === 0) return "0%";
+    return `${value.toFixed(1)}%`;
+  };
 
   const handleAddCompany = async (e) => {
     e.preventDefault();
@@ -118,7 +197,8 @@ const AdminDashboard = () => {
         description: "",
         eligible_branches: "",
       });
-      await fetchJobs();
+      const updatedJobs = (await fetchJobs()) || [];
+      await loadAdminStats(updatedJobs);
     } else {
       toast.error(result.message);
     }
@@ -127,9 +207,12 @@ const AdminDashboard = () => {
   const handleViewApplicants = async (jobId, jobRole) => {
     setSelectedJobId(jobId);
     setSelectedJobRole(jobRole);
+    setSelectedJobApplicantsCount(0);
+    setJobApplicants([]);
     setIsApplicantsOpen(true);
     const applicants = await fetchApplicants(jobId);
     setJobApplicants(applicants);
+    setSelectedJobApplicantsCount(applicants.length);
   };
 
   const normalizeStatus = (status) => (status || "").toString().toLowerCase();
@@ -160,7 +243,9 @@ const AdminDashboard = () => {
       if (selectedJobId) {
         const updated = await fetchApplicants(selectedJobId);
         setJobApplicants(updated);
+        setSelectedJobApplicantsCount(updated.length);
       }
+      await loadAdminStats();
     } else {
       toast.error(result.message);
     }
@@ -198,6 +283,7 @@ const AdminDashboard = () => {
       if (selectedJobId) {
         const updated = await fetchApplicants(selectedJobId);
         setJobApplicants(updated);
+        setSelectedJobApplicantsCount(updated.length);
       }
     } else {
       toast.error(result.message);
@@ -242,12 +328,15 @@ const AdminDashboard = () => {
 
       <main className="max-w-6xl mx-auto p-4 md:p-6">
         <Tabs defaultValue="companies" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 max-w-2xl">
+          <TabsList className="grid w-full grid-cols-4 max-w-3xl">
             <TabsTrigger value="companies" className="gap-1">
               <Building2 className="w-4 h-4" /> Companies
             </TabsTrigger>
             <TabsTrigger value="jobs" className="gap-1">
               <Briefcase className="w-4 h-4" /> Jobs
+            </TabsTrigger>
+            <TabsTrigger value="statistics" className="gap-1">
+              <BarChart3 className="w-4 h-4" /> Statistics
             </TabsTrigger>
             <TabsTrigger value="interviews" className="gap-1">
               <Calendar className="w-4 h-4" /> Interviews
@@ -277,6 +366,9 @@ const AdminDashboard = () => {
                           const result = await deleteCompany(c.id);
                           if (result.success) {
                             toast.success(result.message);
+                            setCompanies((await fetchCompanies()) || []);
+                            const updatedJobs = (await fetchJobs()) || [];
+                            await loadAdminStats(updatedJobs);
                           } else {
                             toast.error(result.message);
                           }
@@ -357,14 +449,16 @@ const AdminDashboard = () => {
                         <Button
                           size="sm"
                           variant="destructive"
-                          onClick={async () => {
-                            const result = await deleteJob(j.id);
-                            if (result.success) {
-                              toast.success(result.message);
-                            } else {
-                              toast.error(result.message);
-                            }
-                          }}
+                        onClick={async () => {
+                          const result = await deleteJob(j.id);
+                          if (result.success) {
+                            toast.success(result.message);
+                            const updatedJobs = (await fetchJobs()) || [];
+                            await loadAdminStats(updatedJobs);
+                          } else {
+                            toast.error(result.message);
+                          }
+                        }}
                         >
                           Delete
                         </Button>
@@ -463,6 +557,80 @@ const AdminDashboard = () => {
             </div>
           </TabsContent>
 
+          <TabsContent value="statistics" className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              <Card className="shadow-card">
+                <CardContent className="py-5 flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Total Companies</p>
+                    <p className="text-3xl font-bold text-foreground">{companies.length}</p>
+                  </div>
+                  <Building2 className="w-8 h-8 text-muted-foreground" />
+                </CardContent>
+              </Card>
+
+              <Card className="shadow-card">
+                <CardContent className="py-5 flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Total Students Applied</p>
+                    <p className="text-3xl font-bold text-foreground">
+                      {statsLoading ? "..." : adminStats.totalApplied}
+                    </p>
+                  </div>
+                  <Briefcase className="w-8 h-8 text-muted-foreground" />
+                </CardContent>
+              </Card>
+
+              <Card className="shadow-card">
+                <CardContent className="py-5 flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Total Students Accepted</p>
+                    <p className="text-3xl font-bold text-foreground">
+                      {statsLoading ? "..." : adminStats.totalAccepted}
+                    </p>
+                  </div>
+                  <Calendar className="w-8 h-8 text-muted-foreground" />
+                </CardContent>
+              </Card>
+
+              <Card className="shadow-card">
+                <CardContent className="py-5 flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Average CTC</p>
+                    <p className="text-3xl font-bold text-foreground">
+                      {statsLoading ? "..." : formatCtc(adminStats.averageCtc)}
+                    </p>
+                  </div>
+                  <BarChart3 className="w-8 h-8 text-muted-foreground" />
+                </CardContent>
+              </Card>
+
+              <Card className="shadow-card">
+                <CardContent className="py-5 flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Median CTC</p>
+                    <p className="text-3xl font-bold text-foreground">
+                      {statsLoading ? "..." : formatCtc(adminStats.medianCtc)}
+                    </p>
+                  </div>
+                  <BarChart3 className="w-8 h-8 text-muted-foreground" />
+                </CardContent>
+              </Card>
+
+              <Card className="shadow-card">
+                <CardContent className="py-5 flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Placement Rate</p>
+                    <p className="text-3xl font-bold text-foreground">
+                      {statsLoading ? "..." : formatPercentage(adminStats.placementRate)}
+                    </p>
+                  </div>
+                  <BarChart3 className="w-8 h-8 text-muted-foreground" />
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
           <TabsContent value="interviews" className="space-y-4">
             <div className="grid gap-3">
               {loading && <p className="text-muted-foreground text-center py-8">Loading interviews...</p>}
@@ -514,6 +682,9 @@ const AdminDashboard = () => {
             </DialogHeader>
 
             <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Total students applied: {selectedJobApplicantsCount}
+              </p>
               {loading && <p className="text-center py-8">Loading applicants...</p>}
               {!loading && jobApplicants.length === 0 && (
                 <p className="text-muted-foreground text-sm text-center py-8">
@@ -562,7 +733,7 @@ const AdminDashboard = () => {
                             <SelectContent>
                               <SelectItem value="applied">Pending</SelectItem>
                               <SelectItem value="selected">Selected for Interview</SelectItem>
-                              <SelectItem value="shortlisted">Shortlisted</SelectItem>
+                              <SelectItem value="shortlisted">Accepted</SelectItem>
                               <SelectItem value="rejected">Rejected</SelectItem>
                             </SelectContent>
                           </Select>
