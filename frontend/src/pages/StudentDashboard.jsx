@@ -243,7 +243,7 @@ const StudentDashboard = () => {
                     </p>
                     <p className="font-medium text-foreground">{a.role}</p>
                     <p className="text-sm text-muted-foreground">
-                      CTC: ₹{a.ctc} • Min CGPA: {a.min_cgpa}
+                      CTC: ₹{a.ctc} LPA • Min CGPA: {a.min_cgpa}
                     </p>
                     {a.description && (
                       <p className="text-sm text-muted-foreground mt-1">
