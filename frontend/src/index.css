@@ -180,15 +180,24 @@
     border: 1px solid hsl(0 0% 100% / 0.7);
   }
   .dashboard-tabs {
-    background: hsl(0 0% 100% / 0.7);
+    background: hsl(240 16% 92%);
     backdrop-filter: blur(14px);
     border: 1px solid hsl(220 13% 88% / 0.9);
     box-shadow: var(--shadow-card);
   }
+  .dashboard-tab-trigger {
+    background: hsl(0 0% 100%);
+    color: hsl(220 15% 20%);
+    transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+  }
+  .dashboard-tab-trigger:hover {
+    background: hsl(217 20% 96%);
+    transform: translateY(-1px);
+  }
   .dashboard-tab-trigger[data-state="active"] {
-    background: var(--gradient-primary);
-    color: white;
-    box-shadow: var(--shadow-card);
+    background: linear-gradient(135deg, hsl(210 80% 68%), hsl(220 84% 70%));
+    color: hsl(0 0% 100%);
+    box-shadow: 0 0 0 1px hsl(210 80% 68% / 0.6), var(--shadow-card);
   }
   .admin-gradient {
     background: var(--gradient-admin);
