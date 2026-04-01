@@ -211,3 +211,10 @@ placement-management-system/
 └── README.md
 ```
 
+## Team
+This project was developed by students of IIIT Dharwad as part of the Database Management and Warehousing Course (4th Semester).
+
+- Aalekh Raghuvanshi 
+- Devam Sharma
+- Hemant Kumar
+- Saksham Kushwah
