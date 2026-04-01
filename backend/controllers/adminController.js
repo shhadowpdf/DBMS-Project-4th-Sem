@@ -89,6 +89,7 @@ export const getApplicants = async (req, res) => {
     const [apps] = await db.query(
         `SELECT 
     a.id,
+    a.student_id,
     s.name,
     s.cgpa,
     s.branch,
