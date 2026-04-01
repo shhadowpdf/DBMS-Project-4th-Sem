@@ -82,9 +82,21 @@ const StudentDashboard = () => {
     return normalized === "applied" || normalized === "pending";
   };
 
+  const statusClassName = (status) => {
+    const normalized = (status || "").toString().toLowerCase();
+    if (normalized === "applied" || normalized === "pending") return "status-pending";
+    if (normalized === "selected" || normalized === "shortlisted") return "status-progress";
+    if (normalized === "accepted") return "status-success";
+    if (normalized === "rejected") return "status-danger";
+    return "";
+  };
+
+  const pendingApplications = applications.filter((a) => canUnapply(a.status)).length;
+  const interviewCount = interviews.length;
+
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card shadow-card sticky top-0 z-10">
+    <div className="dashboard-shell min-h-screen bg-background">
+      <header className="dashboard-header border-b border-white/50 shadow-card sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
           <h1 className="text-lg font-bold font-heading text-foreground">
             PlaceMe
@@ -109,7 +121,7 @@ const StudentDashboard = () => {
 
       <main className="max-w-6xl mx-auto p-4 md:p-6">
         {studentProfile && (
-          <Card className="shadow-card mb-6">
+          <Card className="dashboard-panel shadow-card mb-6 border-white/60">
             <CardContent className="py-4">
               <div className="flex flex-wrap items-center justify-between gap-4 mb-3">
                 <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm flex-1">
@@ -151,15 +163,36 @@ const StudentDashboard = () => {
           </Card>
         )}
 
+        <div className="mb-6 grid gap-4 md:grid-cols-2">
+          <Card className="metric-card metric-purple rounded-2xl">
+            <CardContent className="flex items-center justify-between py-5">
+              <div>
+                <p className="text-sm text-slate-600">Applications In Progress</p>
+                <p className="mt-1 text-3xl font-bold text-slate-900">{pendingApplications}</p>
+              </div>
+              <ClipboardList className="h-8 w-8 text-indigo-500" />
+            </CardContent>
+          </Card>
+          <Card className="metric-card metric-blue rounded-2xl">
+            <CardContent className="flex items-center justify-between py-5">
+              <div>
+                <p className="text-sm text-slate-600">Upcoming Interviews</p>
+                <p className="mt-1 text-3xl font-bold text-slate-900">{interviewCount}</p>
+              </div>
+              <Calendar className="h-8 w-8 text-sky-600" />
+            </CardContent>
+          </Card>
+        </div>
+
         <Tabs defaultValue="jobs" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 max-w-lg">
-            <TabsTrigger value="jobs" className="gap-1">
+          <TabsList className="dashboard-tabs grid h-auto w-full max-w-lg grid-cols-3 rounded-2xl p-1.5">
+            <TabsTrigger value="jobs" className="dashboard-tab-trigger gap-1 rounded-xl py-2.5">
               <Briefcase className="w-4 h-4" /> Jobs
             </TabsTrigger>
-            <TabsTrigger value="applications" className="gap-1">
+            <TabsTrigger value="applications" className="dashboard-tab-trigger gap-1 rounded-xl py-2.5">
               <ClipboardList className="w-4 h-4" /> My Applications
             </TabsTrigger>
-            <TabsTrigger value="interviews" className="gap-1">
+            <TabsTrigger value="interviews" className="dashboard-tab-trigger gap-1 rounded-xl py-2.5">
               <Calendar className="w-4 h-4" /> Interviews
             </TabsTrigger>
           </TabsList>
@@ -179,7 +212,7 @@ const StudentDashboard = () => {
             {jobs.map((j) => {
               const applied = appliedJobIds.has(j.id);
               return (
-                <Card key={j.id} className="shadow-card">
+                <Card key={j.id} className="dashboard-panel shadow-card border-white/60">
                   <CardContent className="py-4">
                     <div className="flex items-center justify-between flex-wrap gap-3">
                       <div>
@@ -235,7 +268,7 @@ const StudentDashboard = () => {
               </p>
             )}
             {applications.map((a) => (
-              <Card key={a.id} className="shadow-card">
+              <Card key={a.id} className="dashboard-panel shadow-card border-white/60">
                 <CardContent className="py-4 flex items-center justify-between flex-wrap gap-2">
                   <div>
                     <p className="text-lg font-bold text-foreground">
@@ -252,7 +285,7 @@ const StudentDashboard = () => {
                     )}
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge variant={statusColor(a.status)} className="capitalize">
+                    <Badge variant={statusColor(a.status)} className={`status-pill capitalize ${statusClassName(a.status)}`}>
                       {a.status}
                     </Badge>
                     <Button
@@ -293,15 +326,15 @@ const StudentDashboard = () => {
               </p>
             )}
             {interviews.map((i) => (
-              <Card key={i.id} className="shadow-card">
+              <Card key={i.id} className="dashboard-panel shadow-card border-white/60">
                 <CardContent className="py-4">
                   <div className="space-y-4">
                     {/* Company & Position Header */}
-                    <div className="border-b border-border pb-3">
+                    <div className="border-b border-sky-100 pb-3">
                       <p className="text-lg font-bold text-foreground">{i.company_name}</p>
                       <p className="font-medium text-foreground">{i.role}</p>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        💰 CTC: ₹{i.ctc} LPA
+                      <p className="mt-1 text-sm text-sky-700">
+                        CTC: ₹{i.ctc} LPA
                       </p>
                     </div>
 
@@ -311,7 +344,10 @@ const StudentDashboard = () => {
                         <p className="text-sm font-medium text-muted-foreground mb-1">Interview Round</p>
                         <p className="text-lg font-bold text-foreground">{i.interview_round}</p>
                       </div>
-                      <Badge variant={statusColor(i.application_status)} className="capitalize">
+                      <Badge
+                        variant={statusColor(i.application_status)}
+                        className={`status-pill capitalize ${statusClassName(i.application_status)}`}
+                      >
                         {i.application_status}
                       </Badge>
                     </div>
@@ -319,7 +355,7 @@ const StudentDashboard = () => {
                     {/* Date/Time & Meeting Link */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <p className="text-sm font-medium text-muted-foreground mb-1">📅 Date & Time</p>
+                        <p className="text-sm font-medium text-muted-foreground mb-1">Date & Time</p>
                         <p className="font-medium text-foreground">
                           {new Date(i.interview_date).toLocaleDateString('en-IN', {
                             year: 'numeric',
@@ -332,11 +368,11 @@ const StudentDashboard = () => {
 
                       {i.interview_link && (
                         <div>
-                          <p className="text-sm font-medium text-muted-foreground mb-1">🔗 Meeting Link</p>
+                          <p className="text-sm font-medium text-muted-foreground mb-1">Meeting Link</p>
                           <Button
                             variant="outline"
                             size="sm"
-                            className="gap-1 w-full justify-center"
+                            className="gap-1 w-full justify-center border-sky-200 bg-white/80 text-sky-700 hover:bg-sky-50"
                             onClick={() => window.open(i.interview_link, '_blank')}
                           >
                             <ExternalLink className="w-3 h-3" />

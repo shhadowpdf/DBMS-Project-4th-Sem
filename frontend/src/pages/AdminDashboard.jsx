@@ -316,9 +316,18 @@ const AdminDashboard = () => {
     }
   };
 
+  const statusClassName = (status) => {
+    const normalized = normalizeStatus(status);
+    if (normalized === "applied" || normalized === "pending") return "status-pending";
+    if (normalized === "selected" || normalized === "shortlisted") return "status-progress";
+    if (normalized === "accepted") return "status-success";
+    if (normalized === "rejected") return "status-danger";
+    return "";
+  };
+
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card shadow-card sticky top-0 z-10">
+    <div className="dashboard-shell min-h-screen bg-background">
+      <header className="dashboard-header border-b border-white/50 shadow-card sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
           <h1 className="text-lg font-bold font-heading text-foreground">PlaceMe Admin</h1>
           <div className="flex items-center gap-3">
@@ -332,17 +341,17 @@ const AdminDashboard = () => {
 
       <main className="max-w-6xl mx-auto p-4 md:p-6">
         <Tabs defaultValue="companies" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 max-w-3xl">
-            <TabsTrigger value="companies" className="gap-1">
+          <TabsList className="dashboard-tabs grid h-auto w-full max-w-3xl grid-cols-4 rounded-2xl p-1.5">
+            <TabsTrigger value="companies" className="dashboard-tab-trigger gap-1 rounded-xl py-2.5">
               <Building2 className="w-4 h-4" /> Companies
             </TabsTrigger>
-            <TabsTrigger value="jobs" className="gap-1">
+            <TabsTrigger value="jobs" className="dashboard-tab-trigger gap-1 rounded-xl py-2.5">
               <Briefcase className="w-4 h-4" /> Jobs
             </TabsTrigger>
-            <TabsTrigger value="statistics" className="gap-1">
+            <TabsTrigger value="statistics" className="dashboard-tab-trigger gap-1 rounded-xl py-2.5">
               <BarChart3 className="w-4 h-4" /> Statistics
             </TabsTrigger>
-            <TabsTrigger value="interviews" className="gap-1">
+            <TabsTrigger value="interviews" className="dashboard-tab-trigger gap-1 rounded-xl py-2.5">
               <Calendar className="w-4 h-4" /> Interviews
             </TabsTrigger>
           </TabsList>
@@ -354,7 +363,7 @@ const AdminDashboard = () => {
                 <p className="text-muted-foreground text-sm text-center py-8">No companies yet. Add one below.</p>
               )}
               {companies.map((c) => (
-                <Card key={c.id} className="shadow-card">
+                <Card key={c.id} className="dashboard-panel shadow-card border-white/60">
                   <CardContent className="flex items-center justify-between py-4">
                     <div>
                         <p className="text-xs text-muted-foreground">Company ID: {c.id}</p>
@@ -387,7 +396,7 @@ const AdminDashboard = () => {
               ))}
             </div>
 
-            <Card className="shadow-card">
+            <Card className="dashboard-panel shadow-card border-white/60">
               <CardHeader>
                 <CardTitle className="text-lg font-heading flex items-center gap-2">
                   <Plus className="w-5 h-5" /> Add Company
@@ -430,7 +439,7 @@ const AdminDashboard = () => {
                 <p className="text-muted-foreground text-sm text-center py-8">No jobs yet.</p>
               )}
               {jobs.map((j) => (
-                <Card key={j.id} className="shadow-card">
+                <Card key={j.id} className="dashboard-panel shadow-card border-white/60">
                   <CardContent className="py-4">
                     <div className="flex items-start justify-between">
                       <div>
@@ -471,7 +480,7 @@ const AdminDashboard = () => {
                   </CardContent>
                 </Card>
               ))}
-              <Card className="shadow-card">
+              <Card className="dashboard-panel shadow-card border-white/60">
               <CardHeader>
                 <CardTitle className="text-lg font-heading flex items-center gap-2">
                   <Plus className="w-5 h-5" /> Create Job
@@ -563,73 +572,73 @@ const AdminDashboard = () => {
 
           <TabsContent value="statistics" className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              <Card className="shadow-card">
+              <Card className="metric-card metric-blue rounded-2xl">
                 <CardContent className="py-5 flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground">Total Companies</p>
-                    <p className="text-3xl font-bold text-foreground">{companies.length}</p>
+                    <p className="text-sm text-slate-600">Total Companies</p>
+                    <p className="text-3xl font-bold text-slate-900">{companies.length}</p>
                   </div>
-                  <Building2 className="w-8 h-8 text-muted-foreground" />
+                  <Building2 className="w-8 h-8 text-sky-600" />
                 </CardContent>
               </Card>
 
-              <Card className="shadow-card">
+              <Card className="metric-card metric-purple rounded-2xl">
                 <CardContent className="py-5 flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground">Total Students Applied</p>
-                    <p className="text-3xl font-bold text-foreground">
+                    <p className="text-sm text-slate-600">Total Students Applied</p>
+                    <p className="text-3xl font-bold text-slate-900">
                       {statsLoading ? "..." : adminStats.totalApplied}
                     </p>
                   </div>
-                  <Briefcase className="w-8 h-8 text-muted-foreground" />
+                  <Briefcase className="w-8 h-8 text-indigo-500" />
                 </CardContent>
               </Card>
 
-              <Card className="shadow-card">
+              <Card className="metric-card metric-teal rounded-2xl">
                 <CardContent className="py-5 flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground">Total Students Accepted</p>
-                    <p className="text-3xl font-bold text-foreground">
+                    <p className="text-sm text-slate-600">Total Students Accepted</p>
+                    <p className="text-3xl font-bold text-slate-900">
                       {statsLoading ? "..." : adminStats.totalAccepted}
                     </p>
                   </div>
-                  <Calendar className="w-8 h-8 text-muted-foreground" />
+                  <Calendar className="w-8 h-8 text-emerald-600" />
                 </CardContent>
               </Card>
 
-              <Card className="shadow-card">
+              <Card className="metric-card metric-gold rounded-2xl">
                 <CardContent className="py-5 flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground">Average CTC</p>
-                    <p className="text-3xl font-bold text-foreground">
+                    <p className="text-sm text-slate-600">Average CTC</p>
+                    <p className="text-3xl font-bold text-slate-900">
                       {statsLoading ? "..." : formatCtc(adminStats.averageCtc)}
                     </p>
                   </div>
-                  <BarChart3 className="w-8 h-8 text-muted-foreground" />
+                  <BarChart3 className="w-8 h-8 text-amber-600" />
                 </CardContent>
               </Card>
 
-              <Card className="shadow-card">
+              <Card className="metric-card metric-blue rounded-2xl">
                 <CardContent className="py-5 flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground">Median CTC</p>
-                    <p className="text-3xl font-bold text-foreground">
+                    <p className="text-sm text-slate-600">Median CTC</p>
+                    <p className="text-3xl font-bold text-slate-900">
                       {statsLoading ? "..." : formatCtc(adminStats.medianCtc)}
                     </p>
                   </div>
-                  <BarChart3 className="w-8 h-8 text-muted-foreground" />
+                  <BarChart3 className="w-8 h-8 text-sky-600" />
                 </CardContent>
               </Card>
 
-              <Card className="shadow-card">
+              <Card className="metric-card metric-teal rounded-2xl">
                 <CardContent className="py-5 flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground">Placement Rate</p>
-                    <p className="text-3xl font-bold text-foreground">
+                    <p className="text-sm text-slate-600">Placement Rate</p>
+                    <p className="text-3xl font-bold text-slate-900">
                       {statsLoading ? "..." : formatPercentage(adminStats.placementRate)}
                     </p>
                   </div>
-                  <BarChart3 className="w-8 h-8 text-muted-foreground" />
+                  <BarChart3 className="w-8 h-8 text-emerald-600" />
                 </CardContent>
               </Card>
             </div>
@@ -642,7 +651,7 @@ const AdminDashboard = () => {
                 <p className="text-muted-foreground text-sm text-center py-8">No interviews scheduled yet.</p>
               )}
               {interviews.map((i) => (
-                <Card key={i.id} className="shadow-card">
+                <Card key={i.id} className="dashboard-panel shadow-card border-white/60">
                   <CardContent className="py-4">
                     <div className="space-y-2">
                       <div className="flex items-start justify-between">
@@ -655,7 +664,7 @@ const AdminDashboard = () => {
                             Branch: {i.branch}
                           </p>
                         </div>
-                        <Badge variant="default" className="capitalize">
+                        <Badge className="status-pill status-progress capitalize">
                           {i.interview_round}
                         </Badge>
                       </div>
@@ -696,7 +705,7 @@ const AdminDashboard = () => {
                 </p>
               )}
               {jobApplicants.map((a) => (
-                <Card key={a.id} className="shadow-card">
+                <Card key={a.id} className="dashboard-panel shadow-card border-white/60">
                   <CardContent className="py-4">
                     <div className="flex items-start justify-between flex-wrap gap-3">
                       <div className="flex-1">
@@ -724,7 +733,7 @@ const AdminDashboard = () => {
                       </div>
                       <div className="flex flex-col items-end gap-2">
                         <div className="flex items-center gap-2">
-                          <Badge variant={statusColor(a.status)}>
+                          <Badge variant={statusColor(a.status)} className={`status-pill ${statusClassName(a.status)}`}>
                             {statusLabel(a.status)}
                           </Badge>
                           <Select

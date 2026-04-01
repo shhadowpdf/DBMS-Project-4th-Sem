@@ -55,6 +55,11 @@
 
     --gradient-primary: linear-gradient(135deg, hsl(217, 91%, 50%), hsl(240, 80%, 60%));
     --gradient-hero: linear-gradient(135deg, hsl(220, 25%, 10%), hsl(220, 30%, 18%));
+    --gradient-admin: linear-gradient(135deg, hsl(216 90% 57%), hsl(193 88% 48%), hsl(168 72% 42%));
+    --gradient-student: linear-gradient(135deg, hsl(269 76% 58%), hsl(233 87% 63%), hsl(196 86% 56%));
+    --gradient-surface: radial-gradient(circle at top left, hsl(212 100% 90% / 0.9), transparent 34%),
+      radial-gradient(circle at top right, hsl(171 85% 86% / 0.9), transparent 28%),
+      linear-gradient(180deg, hsl(210 33% 99%), hsl(218 29% 95%));
     --shadow-card: 0 1px 3px hsl(220 25% 10% / 0.06), 0 4px 12px hsl(220 25% 10% / 0.04);
     --shadow-elevated: 0 4px 24px hsl(220 25% 10% / 0.1);
   }
@@ -89,6 +94,8 @@
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-body);
+    background-image: var(--gradient-surface);
+    background-attachment: fixed;
   }
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-heading);
@@ -107,5 +114,138 @@
   }
   .shadow-elevated {
     box-shadow: var(--shadow-elevated);
+  }
+  .dashboard-shell {
+    position: relative;
+    overflow: hidden;
+  }
+  .dashboard-shell::before {
+    content: "";
+    position: fixed;
+    inset: -10% auto auto -10%;
+    width: 22rem;
+    height: 22rem;
+    border-radius: 9999px;
+    background: hsl(217 91% 50% / 0.12);
+    filter: blur(20px);
+    pointer-events: none;
+  }
+  .dashboard-shell::after {
+    content: "";
+    position: fixed;
+    inset: auto -8% 10% auto;
+    width: 18rem;
+    height: 18rem;
+    border-radius: 9999px;
+    background: hsl(168 72% 42% / 0.14);
+    filter: blur(18px);
+    pointer-events: none;
+  }
+  .dashboard-header {
+    backdrop-filter: blur(18px);
+    background: hsl(0 0% 100% / 0.72);
+  }
+  .dashboard-hero {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid hsl(0 0% 100% / 0.35);
+    color: white;
+    box-shadow: var(--shadow-elevated);
+  }
+  .dashboard-hero::before {
+    content: "";
+    position: absolute;
+    inset: auto -4rem -5rem auto;
+    width: 14rem;
+    height: 14rem;
+    border-radius: 9999px;
+    background: hsl(0 0% 100% / 0.16);
+  }
+  .dashboard-hero::after {
+    content: "";
+    position: absolute;
+    inset: -5rem auto auto -4rem;
+    width: 12rem;
+    height: 12rem;
+    border-radius: 9999px;
+    background: hsl(0 0% 100% / 0.1);
+  }
+  .dashboard-hero > * {
+    position: relative;
+    z-index: 1;
+  }
+  .dashboard-panel {
+    background: hsl(0 0% 100% / 0.78);
+    backdrop-filter: blur(18px);
+    border: 1px solid hsl(0 0% 100% / 0.7);
+  }
+  .dashboard-tabs {
+    background: hsl(0 0% 100% / 0.7);
+    backdrop-filter: blur(14px);
+    border: 1px solid hsl(220 13% 88% / 0.9);
+    box-shadow: var(--shadow-card);
+  }
+  .dashboard-tab-trigger[data-state="active"] {
+    background: var(--gradient-primary);
+    color: white;
+    box-shadow: var(--shadow-card);
+  }
+  .admin-gradient {
+    background: var(--gradient-admin);
+  }
+  .student-gradient {
+    background: var(--gradient-student);
+  }
+  .metric-card {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid hsl(0 0% 100% / 0.72);
+    box-shadow: var(--shadow-card);
+  }
+  .metric-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, hsl(0 0% 100% / 0.26), transparent 68%);
+    pointer-events: none;
+  }
+  .metric-card > * {
+    position: relative;
+    z-index: 1;
+  }
+  .metric-blue {
+    background: linear-gradient(135deg, hsl(217 89% 96%), hsl(205 100% 92%));
+  }
+  .metric-teal {
+    background: linear-gradient(135deg, hsl(165 68% 94%), hsl(186 78% 89%));
+  }
+  .metric-gold {
+    background: linear-gradient(135deg, hsl(42 100% 92%), hsl(25 100% 90%));
+  }
+  .metric-purple {
+    background: linear-gradient(135deg, hsl(275 100% 96%), hsl(238 100% 93%));
+  }
+  .status-pill {
+    border: 1px solid transparent;
+  }
+  .status-pending {
+    background: hsl(47 100% 92%);
+    color: hsl(30 76% 28%);
+    border-color: hsl(43 94% 80%);
+  }
+  .status-progress {
+    background: hsl(219 100% 94%);
+    color: hsl(223 72% 38%);
+    border-color: hsl(217 100% 86%);
+  }
+  .status-success {
+    background: hsl(153 55% 91%);
+    color: hsl(160 84% 20%);
+    border-color: hsl(153 52% 78%);
+  }
+  .status-danger {
+    background: hsl(0 100% 95%);
+    color: hsl(0 72% 42%);
+    border-color: hsl(0 85% 86%);
   }
 }
