@@ -107,10 +107,14 @@ const AdminDashboard = () => {
         }))
       );
 
-      const totalApplied = applicantsByJob.reduce(
-        (count, { applicants }) => count + applicants.length,
-        0
-      );
+      // Count unique students by collecting all student IDs
+      const uniqueStudentIds = new Set();
+      applicantsByJob.forEach(({ applicants }) => {
+        applicants.forEach((applicant) => {
+          uniqueStudentIds.add(applicant.student_id);
+        });
+      });
+      const totalApplied = uniqueStudentIds.size;
 
       const acceptedStatuses = new Set(["accepted", "shortlisted"]);
       const acceptedCtcs = applicantsByJob.flatMap(({ job, applicants }) =>
